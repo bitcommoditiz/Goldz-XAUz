@@ -13,11 +13,6 @@ USE_IPV6:=1
 
 LINK:=$(CXX)
 
-BDB_LIB_PATH=/home/webadmin/db-4.8.30.NC/build_unix
-BDB_INCLUDE_PATH=/home/webadmin/db-4.8.30.NC/build_unix
-BOOST_INCLUDE_PATH=/home/webadmin/boost_1_54_0
-BOOST_LIB_PATH=/home/webadmin/boost_1_54_0/stage/lib
-
 DEFS=-DBOOST_SPIRIT_THREADSAFE -D_FILE_OFFSET_BITS=64
 
 DEFS += $(addprefix -I,$(CURDIR) $(CURDIR)/obj $(BOOST_INCLUDE_PATH) $(BDB_INCLUDE_PATH) $(OPENSSL_INCLUDE_PATH))
