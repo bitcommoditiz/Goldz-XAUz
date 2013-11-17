@@ -35,7 +35,7 @@ QString BitcoinUnits::name(int unit)
     switch(unit)
     {
     case BTC: return QString("XAUz (Ozz of XAUz)");
-    case mBTC: return QString("mXAUz (0.001 Ozz of AXUz)");
+    case mBTC: return QString("mXAUz (0.001 Ozz of XAUz)");
     case uBTC: return QString::fromUtf8("μXAUz (0.000001 Ozz of XAUz)");
     default: return QString("???");
     }
