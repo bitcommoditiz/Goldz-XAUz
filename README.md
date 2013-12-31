@@ -6,7 +6,7 @@ http://www.litecoin.org
 Copyright (c) 2009-2013 Bitcoin Developers
 Copyright (c) 2011-2013 Litecoin Developers
 
-What is Litecoin?
+What is XAUz?
 ----------------
 
 Litecoin is a lite version of Bitcoin using scrypt as a proof-of-work algorithm.
