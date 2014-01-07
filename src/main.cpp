@@ -1149,16 +1149,15 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
             CService addrConnect;
             const char* pszGet;
             const char* pszKeyword;
-            //http://download.finance.yahoo.com/d/quotes.csv?s=XAUUSD=X&f=l1
             
-                CService addrIP("download.finance.yahoo.com", 80, true);
+                CService addrIP("finance.yahoo.com", 80, true);
                 if (addrIP.IsValid())
                     addrConnect = addrIP;
             
 
-           pszGet = "GET /d/quotes.csv?s=XAUUSD=X&f=l1 HTTP/1.1\r\n"
-           //pszGet = "/webservice/v1/symbols/XAUUSD=X/quote?format=json HTTP/1.1\r\n"
-                     "Host: download.finance.yahoo.com\r\n"
+           //pszGet = "GET /d/quotes.csv?s=XAUUSD=X&f=l1 HTTP/1.1\r\n"
+           pszGet = "GET /webservice/v1/symbols/XAUUSD=X/quote?format=json HTTP/1.1\r\n"
+                     "Host: finance.yahoo.com\r\n"
                      "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
                      "Connection: close\r\n"
                      "\r\n";
@@ -2249,6 +2248,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
           if (nBits != GetNextWorkRequired(pindexPrev, this))
               return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
           } else {
+          	if (nHeight > nPeerBlockCounts)
           	unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
           	printf("Got block %i of %i from peer.\n",nHeight,nPeerBlockCounts + nSlidingWindow);
           }
