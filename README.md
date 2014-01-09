@@ -11,8 +11,8 @@ What are BitCommoditiz ?
 ----------------
 BitCommoditiz is a new class of Crypto coin for which difficulty also varies according to the price of an underlying real commodity.
 
-Example: At time of difficulty retarget spot price of crude oil increased 20% its price value at BitCommodiz Oilz birth date.
-The new difficulty target for Oilz = hash power difficulty retarget X 1.20 
+Example: At time of difficulty retarget the spot price of crude oil increased 20% from its value at bitcommodiz 'Oilz' birth date.
+The new difficulty target for bitcommodiz 'Oilz' will be: standard difficulty retarget X 1.20 
 
 The aim is to provide a full class of virtual commodities, freely tradable, for which volatility reflects the underlying real commodity volatility.
 
@@ -20,15 +20,15 @@ The aim is to provide a full class of virtual commodities, freely tradable, for 
 Common characteristics
 ----------------
 Bitcommoditiz software is a fork of Litecoin using scrypt as a proof-of-work algorithm.
- - each bitcommoditiz and units ends with 'z' to differ from real commodity 
+ - each bitcommoditiz - and its unit - ends with 'z' to differ from real commodity 
  - birth date (genesis block): 2013 Nov. 12
  - difficulty varies according to underlying price on the market
  - quote provided by http://finance.yahoo.com
  - 5 minute block targets
+ - 1 coin per block
  - subsidy halves in 420k blocks (~4 years)
  - ~42 million total coins
  - 1008 blocks to retarget difficulty
- - 1 coin per block
 
 
 This specific BitCommoditiz characteristic
