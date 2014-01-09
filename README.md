@@ -16,6 +16,7 @@ The new difficulty target for bitcommodiz 'Oilz' will be: standard difficulty re
 
 The aim is to provide a full class of virtual commodities, freely tradable, for which volatility reflects the underlying real commodity volatility.
 
+There is currently 10 BitCommodiz with difficulty retarget varying with price of: gold, platinium, palladium, silver, crude oil, wheat, corn, cotton, coffee, cocoa.
 
 Common characteristics
 ----------------
