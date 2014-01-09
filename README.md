@@ -37,6 +37,7 @@ This specific BitCommoditiz characteristic
  - you are reading readme for Goldz (ticker XAUz)
  - coin unit: Ouncez of Goldz
  - underlying commodity: Gold price in USD (XAU) spot price
+ - gold price on 2013 Nov. 12: USD 1228 per Troy ounce
  - underlying commodity price: http://finance.yahoo.com/webservice/v1/symbols/XAUUSD=X/quote?format=json
 
 For more information, as well as an immediately useable, binary version of BitCommoditiz client sofware, see http://www.bitcommoditiz.org
