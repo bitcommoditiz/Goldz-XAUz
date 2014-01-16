@@ -1271,7 +1271,7 @@ int GetNumBlocksOfPeers()
 
 bool IsInitialBlockDownload()
 {
-    if (pindexBest == NULL || fImporting || fReindex || nBestHeight < Checkpoints::GetTotalBlocksEstimate()+nSlidingWindow)
+    if (pindexBest == NULL || fImporting || fReindex || nBestHeight < Checkpoints::GetTotalBlocksEstimate() || nBestHeight <= (nPeerBlockCounts+nSlidingWindow))
         return true;
     static int64 nLastUpdate;
     static CBlockIndex* pindexLastBest;
@@ -2237,7 +2237,6 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             return state.DoS(10, error("AcceptBlock() : prev block not found"));
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
-
         // Check proof of work
         if(nHeight <= nPeerBlockCounts + nSlidingWindow){
         	fSkipPOWTest = true;
