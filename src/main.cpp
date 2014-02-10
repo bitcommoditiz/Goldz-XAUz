@@ -43,14 +43,13 @@ CBlockIndex* pindexBest = NULL;
 set<CBlockIndex*, CBlockIndexWorkComparator> setBlockIndexValid; // may contain all CBlockIndex*'s that have validness >=BLOCK_VALID_TRANSACTIONS, and must contain those who aren't failed
 int64 nTimeBestReceived = 0;
 int nScriptCheckThreads = 0;
+int nBetterChainBlocks = 0;
 bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
 bool fSkipPOWTest = false;
 bool fCalledForTemplate = false;
-bool fRestarted = false;
- bool fContactLost = false;
 unsigned int nCoinCacheSize = 5000;
 int nPeerBlockCounts = 0;// at start sync the number of blocks in best peer
 double nUnderlyingBirthValue = 1228; //the value of the underlying commodity in US Dollar the date the bitcommoditiz was born
@@ -2247,7 +2246,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         nHeight = pindexPrev->nHeight+1;
        
         // Check proof of work
-       if((fRestarted && (nNewBlocksAccepted < nSlidingWindow)) || (fContactLost && (nNewBlocksAccepted < nSlidingWindow))){
+       if(nNewBlocksAccepted < nSlidingWindow){
        // if(nHeight <= nPeerBlockCounts + nSlidingWindow){
         	fSkipPOWTest = true;
         } else {
@@ -2260,11 +2259,10 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
           	if (nHeight > nPeerBlockCounts) {//do not fill Sliding Window when initial loading from peer
           		unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
           		nNewBlocksAccepted++;
-          			if(nNewBlocksAccepted >= nSlidingWindow)
-          				 fContactLost = false;
-          				 fRestarted = false;
+        			if(nNewBlocksAccepted == nSlidingWindow)
+        				 printf("Got nSlidingWindow quotes now.\n");
           		}
-          	printf("Got block %i of %i from peer.\n",nHeight,nPeerBlockCounts + nSlidingWindow);
+          	printf("Got block %i of %i from peer.\n",nHeight,nBetterChainBlocks + nSlidingWindow);
           }
 
         // Check timestamp against prev
@@ -3387,10 +3385,13 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         cPeerBlockCounts.input(pfrom->nStartingHeight);
         nPeerBlockCounts = pfrom->nStartingHeight;
-        if( (nBestHeight  < nPeerBlockCounts) && !fRestarted){
-        	fContactLost = true;
+        if(nBestHeight < nPeerBlockCounts){
         	nNewBlocksAccepted = 0;
+        	nBetterChainBlocks = pfrom->nStartingHeight;
         	printf("New peer with better chain:  them blocks=%d, us blocks=%d\n", pfrom->nStartingHeight, nBestHeight);
+        	printf("Setting fContactLost to true and nNewBlocksAccepted to zero.\n");
+        }
+        		
         }
 
     }

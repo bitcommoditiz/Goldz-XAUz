@@ -93,7 +93,6 @@ extern CCriticalSection cs_setpwalletRegistered;
 extern std::set<CWallet*> setpwalletRegistered;
 extern unsigned char pchMessageStart[4];
 extern bool fImporting;
-extern bool fRestarted;
 extern bool fReindex;
 extern bool fBenchmark;
 extern int nScriptCheckThreads;
