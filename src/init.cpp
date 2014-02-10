@@ -629,7 +629,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     // ********************************************************* Step 4: application initialization: dir lock, daemonize, pidfile, debug log
-
+		fRestarted=true;
     std::string strDataDir = GetDataDir().string();
     //std::fill(qUnderlyingQuotes.begin(), qUnderlyingQuotes.end(), nUnderlyingBirthValue);
     qUnderlyingQuotes.assign (nSlidingWindow,nUnderlyingBirthValue); 

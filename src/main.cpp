@@ -49,10 +49,13 @@ bool fBenchmark = false;
 bool fTxIndex = false;
 bool fSkipPOWTest = false;
 bool fCalledForTemplate = false;
+bool fRestarted = false;
+ bool fContactLost = false;
 unsigned int nCoinCacheSize = 5000;
 int nPeerBlockCounts = 0;// at start sync the number of blocks in best peer
 double nUnderlyingBirthValue = 1228; //the value of the underlying commodity in US Dollar the date the bitcommoditiz was born
 int nSlidingWindow = 50; // the number of underlying quote we maintain in the queue
+int nNewBlocksAccepted = 0;
 std::deque<double> qUnderlyingQuotes; //sliding queue with the last nSlidingWindow quote values of the underlying commodity
 
 
@@ -2242,8 +2245,10 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             return state.DoS(10, error("AcceptBlock() : prev block not found"));
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
+       
         // Check proof of work
-        if(nHeight <= nPeerBlockCounts + nSlidingWindow){
+       if((fRestarted && (nNewBlocksAccepted < nSlidingWindow)) || (fContactLost && (nNewBlocksAccepted < nSlidingWindow))){
+       // if(nHeight <= nPeerBlockCounts + nSlidingWindow){
         	fSkipPOWTest = true;
         } else {
         	fSkipPOWTest = false;
@@ -2252,8 +2257,13 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
           if (nBits != GetNextWorkRequired(pindexPrev, this))
               return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
           } else {
-          	if (nHeight > nPeerBlockCounts)
-          	unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
+          	if (nHeight > nPeerBlockCounts) {//do not fill Sliding Window when initial loading from peer
+          		unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
+          		nNewBlocksAccepted++;
+          			if(nNewBlocksAccepted >= nSlidingWindow)
+          				 fContactLost = false;
+          				 fRestarted = false;
+          		}
           	printf("Got block %i of %i from peer.\n",nHeight,nPeerBlockCounts + nSlidingWindow);
           }
 
@@ -3377,6 +3387,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
 
         cPeerBlockCounts.input(pfrom->nStartingHeight);
         nPeerBlockCounts = pfrom->nStartingHeight;
+        if( (nBestHeight  < nPeerBlockCounts) && !fRestarted){
+        	fContactLost = true;
+        	nNewBlocksAccepted = 0;
+        	printf("New peer with better chain:  them blocks=%d, us blocks=%d\n", pfrom->nStartingHeight, nBestHeight);
+        }
 
     }
 
