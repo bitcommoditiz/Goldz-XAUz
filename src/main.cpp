@@ -48,7 +48,7 @@ bool fImporting = false;
 bool fReindex = false;
 bool fBenchmark = false;
 bool fTxIndex = false;
-bool fSkipPOWTest = false;
+bool fSkipPOWTest = true;
 bool fCalledForTemplate = false;
 unsigned int nCoinCacheSize = 5000;
 int nPeerBlockCounts = 0;// at start sync the number of blocks in best peer
@@ -1124,6 +1124,8 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     double UnderlyingValue = 0.0;
     double AvgValue = 0.0;
     int RoundedAvgValue = 0;
+    //#define btoa(x) ((x)?"true":"false")
+    //printf("Debug fCalledForTemplate=%s fSkipPOWTest=%s\n", btoa(fCalledForTemplate),btoa(fSkipPOWTest));
     // Genesis block
     if (pindexLast == NULL)
         return nProofOfWorkLimit;
@@ -1167,6 +1169,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
             pszKeyword = "."; // Match the dot in the quote value
             
             UnderlyingValue=GetQuoteFromYahoo(addrConnect, pszGet, pszKeyword);
+            nNewBlocksAccepted++;
             printf("New block ! GetQuoteFromYahoo() got USD %f\n", UnderlyingValue);
             if (UnderlyingValue > 0.0)
             	{
@@ -1183,7 +1186,8 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     }
 
     //retarget: if not enough quotes to provide accurate nBits return a fake nBits value so that we throw an rpc error
-    if(fCalledForTemplate && fSkipPOWTest){
+    
+    if(fCalledForTemplate && fSkipPOWTest){ //AT RETARGET TIME: if miner asks for block template and not enough quotes 
     	return 0;
     }
     
@@ -1252,6 +1256,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     printf("Including an underlying price variation factor of %f\n", AvgValue);
 
     return bnNew.GetCompact();
+
 }
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
@@ -2244,7 +2249,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             return state.DoS(10, error("AcceptBlock() : prev block not found"));
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
-       
+       printf("Debug AcceptBlock nSlidingWindow=%i  nNewBlocksAccepted=%i\n", nSlidingWindow,nNewBlocksAccepted);
         // Check proof of work
        if(nNewBlocksAccepted < nSlidingWindow){
        // if(nHeight <= nPeerBlockCounts + nSlidingWindow){
@@ -2252,17 +2257,18 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
         } else {
         	fSkipPOWTest = false;
         }
-        if(!fSkipPOWTest){
+        if(!fSkipPOWTest){ //under normal condition  make POW
+        	printf("Debug: running POW.\n");
           if (nBits != GetNextWorkRequired(pindexPrev, this))
               return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
           } else {
           	if (nHeight > nPeerBlockCounts) {//do not fill Sliding Window when initial loading from peer
+          		printf("Calling FakenBits.\n");
           		unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
-          		nNewBlocksAccepted++;
         			if(nNewBlocksAccepted == nSlidingWindow)
         				 printf("Got nSlidingWindow quotes now.\n");
           		}
-          	printf("Got block %i of %i from peer.\n",nHeight,nBetterChainBlocks + nSlidingWindow);
+          	printf("Got block %i of %i from peer.\n",nNewBlocksAccepted, nSlidingWindow);
           }
 
         // Check timestamp against prev
@@ -2397,7 +2403,7 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     }
     
     // Store to disk
-    if (!pblock->AcceptBlock(state, dbp))
+    if (!pblock->AcceptBlock(state, dbp)) //Acceptblock is then calling GetNextWorkrequired
         return error("ProcessBlock() : AcceptBlock FAILED");
 
     // Recursively process any orphan blocks that depended on this one
@@ -3388,11 +3394,11 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         if(nBestHeight < nPeerBlockCounts){
         	nNewBlocksAccepted = 0;
         	nBetterChainBlocks = pfrom->nStartingHeight;
-        	printf("New peer with better chain:  them blocks=%d, us blocks=%d\n", pfrom->nStartingHeight, nBestHeight);
+        	printf("New peer with better chain:  them blocks=%d, us blocks=%d\n", nBetterChainBlocks, nBestHeight);
         	printf("Setting fContactLost to true and nNewBlocksAccepted to zero.\n");
-        }
+        } 
         		
-        }
+        
 
     }
 
