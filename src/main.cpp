@@ -33,7 +33,7 @@ unsigned int nTransactionsUpdated = 0;
 
 map<uint256, CBlockIndex*> mapBlockIndex;
 uint256 hashGenesisBlock("0x83d3f8fb83c307c35724b8ab52c877a71a43aeef3ab6f726d511c679b7144ea1");
-static CBigNum bnProofOfWorkLimit(~uint256(0) >> 18); // XAUz: starting difficulty is 1 / 2^10
+static CBigNum bnProofOfWorkLimit(~uint256(0) >> 18); // starting difficulty is 1 / 2^10
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
 uint256 nBestChainWork = 0;
@@ -74,7 +74,7 @@ map<uint256, set<uint256> > mapOrphanTransactionsByPrev;
 // Constant stuff for coinbase transactions we create:
 CScript COINBASE_FLAGS;
 
-const string strMessageMagic = "XAUz Signed Message:\n";
+const string strMessageMagic = "Signed Message:\n";
 
 double dHashesPerSec = 0.0;
 int64 nHPSTimerStart = 0;
@@ -365,7 +365,7 @@ unsigned int LimitOrphanTxSize(unsigned int nMaxOrphans)
 
 bool CTxOut::IsDust() const
 {
-    // XAUz: IsDust() detection disabled, allows any valid dust to be relayed.
+    // IsDust() detection disabled, allows any valid dust to be relayed.
     // The fees imposed on each dust txo is considered sufficient spam deterrant. 
     return false;
 }
@@ -627,7 +627,7 @@ int64 CTransaction::GetMinFee(unsigned int nBlockSize, bool fAllowFree,
         }
     }
 
-    // XAUz
+
     // To limit dust spam, add nBaseFee for each output less than DUST_SOFT_LIMIT
     BOOST_FOREACH(const CTxOut& txout, vout)
         if (txout.nValue < DUST_SOFT_LIMIT)
@@ -1121,7 +1121,6 @@ unsigned int ComputeMinWork(unsigned int nBase, int64 nTime)
 unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock)
 {
     unsigned int nProofOfWorkLimit = bnProofOfWorkLimit.GetCompact();
-    double UnderlyingValue = 0.0;
     double AvgValue = 0.0;
     int RoundedAvgValue = 0;
     //#define btoa(x) ((x)?"true":"false")
@@ -1149,39 +1148,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
                 return pindex->nBits;
             }
         }
-        if(!fCalledForTemplate){
-            CService addrConnect;
-            const char* pszGet;
-            const char* pszKeyword;
-            
-                CService addrIP("finance.yahoo.com", 80, true);
-                if (addrIP.IsValid())
-                    addrConnect = addrIP;
-            
 
-           //pszGet = "GET /d/quotes.csv?s=XAUUSD=X&f=l1 HTTP/1.1\r\n"
-           pszGet = "GET /webservice/v1/symbols/XAUUSD=X/quote?format=json HTTP/1.1\r\n"
-                     "Host: finance.yahoo.com\r\n"
-                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
-                     "Connection: close\r\n"
-                     "\r\n";
-
-            pszKeyword = "."; // Match the dot in the quote value
-            
-            UnderlyingValue=GetQuoteFromYahoo(addrConnect, pszGet, pszKeyword);
-            nNewBlocksAccepted++;
-            printf("New block ! GetQuoteFromYahoo() got USD %f\n", UnderlyingValue);
-            if (UnderlyingValue > 0.0)
-            	{
-            		qUnderlyingQuotes.push_front(UnderlyingValue);
-            		qUnderlyingQuotes.pop_back();
-              }
-              else
-              {
-              	qUnderlyingQuotes.push_front(qUnderlyingQuotes.at(0));//must be the neerest value to what we expected to get from GetQuoteFromYahoo()
-            		qUnderlyingQuotes.pop_back();
-              }
-         }
         return pindexLast->nBits;
     }
 
@@ -1191,7 +1158,7 @@ unsigned int static GetNextWorkRequired(const CBlockIndex* pindexLast, const CBl
     	return 0;
     }
     
-    // XAUz: This fixes an issue where a 51% attack can change difficulty at will.
+    // This fixes an issue where a 51% attack can change difficulty at will.
     // Go back the full period unless it's the first retarget after genesis. Code courtesy of Art Forz
     int blockstogoback = nInterval-1;
     if ((pindexLast->nHeight+1) != nInterval)
@@ -2166,7 +2133,7 @@ bool CBlock::CheckBlock(CValidationState &state, bool fCheckPOW, bool fCheckMerk
     if (vtx.empty() || vtx.size() > MAX_BLOCK_SIZE || ::GetSerializeSize(*this, SER_NETWORK, PROTOCOL_VERSION) > MAX_BLOCK_SIZE)
         return state.DoS(100, error("CheckBlock() : size limits failed"));
 
-    // XAUz: Special short-term limits to avoid 10,000 BDB lock limit:
+    //Special short-term limits to avoid 10,000 BDB lock limit:
     if (GetBlockTime() < 1376568000)  // stop enforcing 15 August 2013 00:00:00
     {
         // Rule is: #unique txids referenced <= 4,500
@@ -2249,27 +2216,16 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
             return state.DoS(10, error("AcceptBlock() : prev block not found"));
         pindexPrev = (*mi).second;
         nHeight = pindexPrev->nHeight+1;
-       printf("Debug AcceptBlock nSlidingWindow=%i  nNewBlocksAccepted=%i\n", nSlidingWindow,nNewBlocksAccepted);
         // Check proof of work
-       if(nNewBlocksAccepted < nSlidingWindow){
-       // if(nHeight <= nPeerBlockCounts + nSlidingWindow){
+       if(nNewBlocksAccepted <= nSlidingWindow){
         	fSkipPOWTest = true;
         } else {
         	fSkipPOWTest = false;
         }
         if(!fSkipPOWTest){ //under normal condition  make POW
-        	printf("Debug: running POW.\n");
           if (nBits != GetNextWorkRequired(pindexPrev, this))
               return state.DoS(100, error("AcceptBlock() : incorrect proof of work"));
-          } else {
-          	if (nHeight > nPeerBlockCounts) {//do not fill Sliding Window when initial loading from peer
-          		printf("Calling FakenBits.\n");
-          		unsigned int nFakenBits = GetNextWorkRequired(pindexPrev, this);
-        			if(nNewBlocksAccepted == nSlidingWindow)
-        				 printf("Got nSlidingWindow quotes now.\n");
-          		}
-          	printf("Got block %i of %i from peer.\n",nNewBlocksAccepted, nSlidingWindow);
-          }
+          } 
 
         // Check timestamp against prev
         if (GetBlockTime() <= pindexPrev->GetMedianTimePast())
@@ -2340,7 +2296,7 @@ bool CBlock::AcceptBlock(CValidationState &state, CDiskBlockPos *dbp)
 
 bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, unsigned int nRequired, unsigned int nToCheck)
 {
-    // XAUz: temporarily disable v2 block lockin until we are ready for v2 transition
+    // temporarily disable v2 block lockin until we are ready for v2 transition
     return false;
     unsigned int nFound = 0;
     for (unsigned int i = 0; i < nToCheck && nFound < nRequired && pstart != NULL; i++)
@@ -2354,6 +2310,7 @@ bool CBlockIndex::IsSuperMajority(int minVersion, const CBlockIndex* pstart, uns
 
 bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBlockPos *dbp)
 {
+	  double UnderlyingValue = 0.0;
     // Check for duplicate
     uint256 hash = pblock->GetHash();
     if (mapBlockIndex.count(hash))
@@ -2403,8 +2360,44 @@ bool ProcessBlock(CValidationState &state, CNode* pfrom, CBlock* pblock, CDiskBl
     }
     
     // Store to disk
-    if (!pblock->AcceptBlock(state, dbp)) //Acceptblock is then calling GetNextWorkrequired
+    if (!pblock->AcceptBlock(state, dbp)) {//Acceptblock is then calling GetNextWorkrequired
         return error("ProcessBlock() : AcceptBlock FAILED");
+      } else if(!(pindexBest == NULL || fImporting || fReindex || nBestHeight < Checkpoints::GetTotalBlocksEstimate())){
+      	//if not initial block download fill the sliding buffer
+      	    nNewBlocksAccepted++;
+      	    if(fSkipPOWTest)
+      	    	printf("Got block %i of %i from peer.\n",nNewBlocksAccepted, nSlidingWindow);
+      	    CService addrConnect;
+            const char* pszGet;
+            const char* pszKeyword;
+            
+                CService addrIP("finance.yahoo.com", 80, true);
+                if (addrIP.IsValid())
+                    addrConnect = addrIP;
+            
+
+           //pszGet = "GET /d/quotes.csv?s=XAUUSD=X&f=l1 HTTP/1.1\r\n"
+           pszGet = "GET /webservice/v1/symbols/XAUUSD=X/quote?format=json HTTP/1.1\r\n"
+                     "Host: finance.yahoo.com\r\n"
+                     "User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)\r\n"
+                     "Connection: close\r\n"
+                     "\r\n";
+
+            pszKeyword = "."; // Match the dot in the quote value
+            
+            UnderlyingValue=GetQuoteFromYahoo(addrConnect, pszGet, pszKeyword);
+            printf("New block on disk ! GetQuoteFromYahoo() got USD %f\n", UnderlyingValue);
+            if (UnderlyingValue > 0.0)
+            	{
+            		qUnderlyingQuotes.push_front(UnderlyingValue);
+            		qUnderlyingQuotes.pop_back();
+              }
+              else
+              {
+              	qUnderlyingQuotes.push_front(qUnderlyingQuotes.at(0));//must be the neerest value to what we expected to get from GetQuoteFromYahoo()
+            		qUnderlyingQuotes.pop_back();
+              }
+      }
 
     // Recursively process any orphan blocks that depended on this one
     vector<uint256> vWorkQueue;
@@ -3159,7 +3152,7 @@ bool static AlreadyHave(const CInv& inv)
 // The message start string is designed to be unlikely to occur in normal data.
 // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
 // a large 4-byte int at any alignment.
-unsigned char pchMessageStart[4] = { 0xfb, 0xc0, 0xb6, 0xdb }; // XAUz: increase each by adding 2 to bitcoin's value.
+unsigned char pchMessageStart[4] = { 0xfb, 0xc0, 0xb6, 0xdb }; // increase each by adding 2 to bitcoin's value.
 
 
 void static ProcessGetData(CNode* pfrom)
@@ -4160,7 +4153,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// XAUzMiner
+// Miner
 //
 
 int static FormatHashBlocks(void* pbuffer, unsigned int len)
@@ -4570,7 +4563,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
         return false;
 
     //// debug print
-    printf("XAUz RPCMiner:\n");
+    printf("RPCMiner:\n");
     printf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(), hashTarget.GetHex().c_str());
     pblock->print();
     printf("generated %s\n", FormatMoney(pblock->vtx[0].vout[0].nValue).c_str());
@@ -4579,7 +4572,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
     {
         LOCK(cs_main);
         if (pblock->hashPrevBlock != hashBestChain)
-            return error("XAUzMiner : generated block is stale");
+            return error("Miner : generated block is stale");
 
         // Remove key from key pool
         reservekey.KeepKey();
@@ -4593,7 +4586,7 @@ bool CheckWork(CBlock* pblock, CWallet& wallet, CReserveKey& reservekey)
         // Process this block the same as if we had received it from another node
         CValidationState state;
         if (!ProcessBlock(state, NULL, pblock))
-            return error("XAUzMiner : ProcessBlock, block not accepted");
+            return error("Miner : ProcessBlock, block not accepted");
     }
 
     return true;
